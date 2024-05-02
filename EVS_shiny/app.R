@@ -10,7 +10,7 @@ library(knitr)
 
 
 
-EVS = read_sav("./EVS_shiny/data/EVS_data_cleaned.sav")
+EVS = read_sav("./data/EVS_data_cleaned.sav")
 
 
 library(labelled)
@@ -239,7 +239,7 @@ server <- function(input, output) {
 #      file.copy("report.Rmd", tempReport, overwrite = TRUE)
       
       # Set up parameters to pass to Rmd document
-      params <- list(n = input$slider, country_num = as.numeric(country_list[which(names(country_list) == input$country_chr)]),
+      params <- list(country_num = as.numeric(country_list[which(names(country_list) == input$country_chr)]),
                      country_chr = input$country_chr, outcome_chr = input$outcome_chr, 
                      control_chr = input$control_chr, agePoly = input$agePoly)
       

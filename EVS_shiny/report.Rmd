@@ -26,7 +26,7 @@ be shown. By default it will show the overall analysis of all countries.
 
 ```{r read in data}
 library(haven)
-EVS = read_sav("./EVS_shiny/data/EVS_data_cleaned.sav")
+EVS = read_sav("./data/EVS_data_cleaned.sav")
 
 if( params$country_chr == "Overall" ){
   EVS_country = EVS

@@ -1,4 +1,20 @@
 
+
+
+
+rm(list=ls())
+
+library(shiny)
+runApp("./EVS_shiny")
+
+library(rsconnect)
+deployApp("./EVS_shiny")
+
+
+
+
+
+
 rm(list=ls())
 
 library(haven)
