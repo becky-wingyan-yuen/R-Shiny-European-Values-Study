@@ -1,0 +1,125 @@
+---
+title: "Report for `r params$country_chr`"
+output: 
+  html_document
+params:
+  country_num: NA
+  country_chr: NA
+  outcome_chr: NA
+  control_chr: NA
+  agePoly: NA
+---
+
+```{r global options, include = FALSE}
+knitr::opts_chunk$set(echo=FALSE, include = TRUE, warning=FALSE, message=FALSE)
+```
+
+## Overview
+
+This is an interface for navigating the results of the European Values Study, 
+we aim to investigate how Europeans think about family, work, religion, politics, 
+and society. All data are downloaded from [European Values Study 2017: Integrated 
+Dataset (EVS 2017)](https://search.gesis.org/research_data/ZA7500). You may choose 
+the country, outcomues, and controls on the sidebars, the corresponding results will
+be shown. By default it will show the overall analysis of all countries.
+
+
+```{r read in data}
+library(haven)
+EVS = read_sav("./EVS_shiny/data/EVS_data_cleaned.sav")
+
+if( params$country_chr == "Overall" ){
+  EVS_country = EVS
+}else{
+  EVS_country = EVS[which(EVS$country == params$country_num),]
+}
+```
+
+
+## Exploration
+
+```{r boxPlot_age}
+if( params$outcome_chr == "When a mother works for pay, do Europeans think the children suffer?" ){
+  ggplot(EVS_country, aes(as.factor(v72), age)) + 
+    geom_boxplot() + 
+    labs(x = "When a mother works for pay, the children suffer", y = "Age (Years)") + 
+    scale_x_discrete(labels = c("strongly agree (1)", "agree (2)", "disagree (3)", "strongly disagree (4)"))
+} else {
+  ggplot(EVS_country, aes(as.factor(v80), age)) + 
+    geom_boxplot() + 
+    labs(x = "When jobs are scarce, give priority to local people over immigrants", 
+         y = "Age (Years)") + 
+    scale_x_discrete(labels = c("strongly agree (1)", "agree (2)", "neither agree nor disagree (3)", "disagree (4)", "strongly disagree (5)"))
+}
+```
+
+```{r boxPlot_sex}
+if( params$outcome_chr == "When a mother works for pay, do Europeans think the children suffer?" ){
+  ggplot(EVS_country, aes(x = as.factor(sex), fill = as.factor(v72))) + 
+    geom_bar(position = "dodge") +  
+    labs(x = "Sex", y = "Count") + 
+    scale_x_discrete(labels = c("Male", "Female"))  + 
+    scale_fill_discrete(name = "Response",
+                        labels = c("strongly agree", "agree", "disagree", "strongly disagree"))
+} else {
+  ggplot(EVS_country, aes(x = as.factor(sex), fill = as.factor(v80))) + 
+    geom_bar(position = "dodge") + 
+    labs(x = "Sex", y = "Count") + 
+    scale_x_discrete(labels = c("Male", "Female"))  + 
+    scale_fill_discrete(name = "Response")
+}
+```
+
+```{r boxPlot_education}
+if( params$outcome_chr == "When a mother works for pay, do Europeans think the children suffer?" ){
+  ggplot(EVS_country, aes(x = as.factor(education), fill = as.factor(v72))) + 
+    geom_bar(position = "dodge")  + 
+    labs(x = "Education (Levels)", y = "Count") + 
+    scale_x_discrete(labels = c("Lower","Medium","Higher"))  + 
+    scale_fill_discrete(name = "Response")
+} else {
+  ggplot(EVS_country, aes(x = as.factor(education), fill = as.factor(v80))) + 
+    geom_bar(position = "dodge")  + 
+    labs(x = "Education (Levels)", y = "Count") + 
+    scale_x_discrete(labels = c("Lower","Medium","Higher"))  + 
+    scale_fill_discrete(name = "Response")
+}
+```
+
+
+## Regression
+
+```{r regression}
+if( params$agePoly > 1 ){
+  if( params$outcome_chr == "When a mother works for pay, do Europeans think the children suffer?" ){
+    model <- lm(as.formula(paste("v72", "~", paste(params$control_chr, collapse = "+"), "+", paste0("age^", 2:params$agePoly, collapse = "+")
+    )), data = EVS_country)
+  }else{
+    model <- lm(as.formula(paste("v80", "~", paste(params$control_chr, collapse = "+"), "+", paste0("age^", 2:params$agePoly, collapse = "+")
+    )), data = EVS_country)
+  }
+} else {
+  if( params$outcome_chr == "When a mother works for pay, do Europeans think the children suffer?" ){
+    model <- lm(as.formula(paste("v72", "~", paste(params$control_chr, collapse = "+")
+    )), data = EVS_country)
+  }else{
+    model <- lm(as.formula(paste("v80", "~", paste(params$control_chr, collapse = "+")
+    )), data = EVS_country)
+  }
+}
+plot(fitted(model), resid(model), xlab = "Fitted Values", ylab = "Residuals")
+summary(model)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+

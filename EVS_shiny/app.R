@@ -6,7 +6,7 @@ library(plotly)
 library(haven)
 library(dplyr)
 library(ggfortify)
-library(stringi)
+library(knitr)
 
 
 
@@ -36,15 +36,16 @@ intro_text <- "This is an interface for navigating the results of the European V
 
 
 # Define the UI for the application
-ui <- dashboardPage(
+ui <- dashboardPage( 
   
   dashboardHeader(title = "Analysis on European Values Study"),
   
   dashboardSidebar(
+    sidebarMenu(
       selectInput(
         "country_chr",
         "Choose Country:",
-        choices = c("Overall",country_list),
+        choices = c("Overall",names(country_list)),
         selected = "Overall"
       ),
       selectInput(
@@ -68,11 +69,15 @@ ui <- dashboardPage(
         max = 5,
         step = 1
       ),
-      menuItem("Overview", tabName = "intro"),
+      menuItem("Overview", tabName = "intro",
+               icon = icon("dashboard")),
       menuItem("Exploration", tabName = "exploration",
                icon = icon("flask")),
       menuItem("Regression", tabName = "regression",
-               icon = icon("book"))
+               icon = icon("book")),
+      menuItem("Report", tabName = "rmd_report",
+               icon = icon("th"))
+    )
   ),
   
   dashboardBody(
@@ -81,7 +86,6 @@ ui <- dashboardPage(
                   h3("Overview of the app"),
                   h5(intro_text)
           ),
-          
           tabItem(tabName = "exploration",
                   h2("Graphical Description"),
                   fluidRow(
@@ -90,16 +94,24 @@ ui <- dashboardPage(
                     plotlyOutput("boxPlot_education")
                   )
           ),
-          
           tabItem(tabName = "regression",
                   h2("Regression Analysis"),
                   fluidRow(
                     plotOutput("scatterPlot"),
                     verbatimTextOutput("regSummary")
                   )
+          ),
+          tabItem(tabName = "rmd_report",
+                  fluidRow(
+                    downloadButton("report", "Generate report")
+                  )
+            
           )
         )
+        
   )
+  
+  
   
 )
 
@@ -116,7 +128,7 @@ server <- function(input, output) {
       }
       else
       {
-        EVS[which(EVS$country == country_list[which(names(country_list) == input$question_chr)]),]
+        EVS[which(EVS$country == country_list[which(names(country_list) == input$country_chr)]),]
       }
   })
   
@@ -187,10 +199,10 @@ server <- function(input, output) {
     
     if( input$agePoly > 1 ){
       if( input$outcome_chr == "When a mother works for pay, do Europeans think the children suffer?" ){
-        lm(as.formula(paste("v72", "~", paste(input$control_chr, collapse = "+"), "+", stri_paste("age^", 2:input$agePoly, collapse = "+")
+        lm(as.formula(paste("v72", "~", paste(input$control_chr, collapse = "+"), "+", paste0("age^", 2:input$agePoly, collapse = "+")
         )), data = sampledData())
       }else{
-        lm(as.formula(paste("v80", "~", paste(input$control_chr, collapse = "+"), "+", stri_paste("age^", 2:input$agePoly, collapse = "+")
+        lm(as.formula(paste("v80", "~", paste(input$control_chr, collapse = "+"), "+", paste0("age^", 2:input$agePoly, collapse = "+")
         )), data = sampledData())
       }
     } else {
@@ -213,6 +225,33 @@ server <- function(input, output) {
   output$regSummary <- renderPrint({
     summary(model())
   })
+  
+  
+  
+  output$report <- downloadHandler(
+    # For PDF output, change this to "report.pdf"
+    filename = "report.html",
+    content = function(file) {
+      # Copy the report file to a temporary directory before processing it, in
+      # case we don't have write permissions to the current working dir (which
+      # can happen when deployed).
+#      tempReport <- file.path(tempdir(), "report.Rmd")
+#      file.copy("report.Rmd", tempReport, overwrite = TRUE)
+      
+      # Set up parameters to pass to Rmd document
+      params <- list(n = input$slider, country_num = as.numeric(country_list[which(names(country_list) == input$country_chr)]),
+                     country_chr = input$country_chr, outcome_chr = input$outcome_chr, 
+                     control_chr = input$control_chr, agePoly = input$agePoly)
+      
+      # Knit the document, passing in the `params` list, and eval it in a
+      # child of the global environment (this isolates the code in the document
+      # from the code in this app).
+      rmarkdown::render("report.Rmd", output_file = file,
+                        params = params,
+                        envir = new.env(parent = globalenv())
+      )
+    }
+  )
   
 }
 
