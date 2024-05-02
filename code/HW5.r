@@ -39,33 +39,17 @@ write_sav(EVS,"./EVS_shiny/data/EVS_data_cleaned.sav")
 
 
 
-test = lm(v72 ~ age, data = EVS)
-
-test = lm(v72 ~ age + age^2, data = EVS)
-
-summary(test)
-
-library(ggfortify)
-plot(test)
-
-
-plot(fitted(test), resid(test))
-
-plot(test$fitted.values, test$residuals)
-
-
-paste(rep("age",5), collapse="*")
 
 
 
-library(stringi)
-
-stri_paste("age^", 1:2, collapse = " + ")
 
 
-stri_paste("age^", 1:5, collapse = " + ")
 
-paste0("age^", 1:5, collapse = " + ")
+
+
+
+
+
 
 
 
@@ -155,102 +139,6 @@ for( i in 1:length(country_list) ){
 dropdown_list = paste(dropdown_list,"\n</details>",sep="")
 cat(dropdown_list)
 
-
-
-
-
-
-
-
-
-
-library(shiny)
-library(knitr)
-
-ui <- shinyUI(
-  fluidPage(
-    uiOutput('markdown')
-  )
-)
-server <- function(input, output) {
-  output$markdown <- renderUI({
-    HTML(markdown::mark_html(knit('test_presentation.rmd', quiet = TRUE)))
-  })
-}
-
-shinyApp(ui, server)
-
-
-
-
-
-
-library(shiny)
-
-ui <- shinyUI(
-  fluidPage(
-    includeHTML('test_presentation.html')
-  )
-)
-server <- function(input, output) {
-}
-
-shinyApp(ui, server)
-
-
-
-
-model <- lm(as.formula(paste("v72", "~", paste(params$control_chr, collapse = "+"), "+", paste0("age^", 2:params$agePoly, collapse = "+"))), data = EVS_country)
-
-
-
-## Regression
-
-```{r regression}
-if( params$agePoly > 1 ){
-  if( params$outcome_chr == "When a mother works for pay, do Europeans think the children suffer?" ){
-    model <- lm(as.formula(paste("v72", "~", paste(params$control_chr, collapse = "+"), "+", paste0("age^", 2:params$agePoly, collapse = "+")
-    )), data = EVS_country)
-  }else{
-    model <- lm(as.formula(paste("v80", "~", paste(params$control_chr, collapse = "+"), "+", paste0("age^", 2:params$agePoly, collapse = "+")
-    )), data = EVS_country)
-  }
-} else {
-  if( params$outcome_chr == "When a mother works for pay, do Europeans think the children suffer?" ){
-    model <- lm(as.formula(paste("v72", "~", paste(params$control_chr, collapse = "+")
-    )), data = EVS_country)
-  }else{
-    model <- lm(as.formula(paste("v80", "~", paste(params$control_chr, collapse = "+")
-    )), data = EVS_country)
-  }
-}
-plot(fitted(model), resid(model), xlab = "Fitted Values", ylab = "Residuals")
-summary(model)
-```
-
-
-#model <- lm(v72 ~ age + sex, data = EVS_country)
-model <- lm(as.formula(paste("v72", "~", paste(c("age","sex"),collapse="+"))), data = EVS_country)
-
-
-
-
-
-fomula = c()
-
-if( params$agePoly > 1 ){
-  if( params$outcome_chr == "When a mother works for pay, do Europeans think the children suffer?" ){
-    fomula = paste("v72", "~", paste(params$control_chr, collapse = "+"), "+", paste0("age^", 2:params$agePoly, collapse = "+"))
-  }else{
-    fomula = paste("v80", "~", paste(params$control_chr, collapse = "+"), "+", paste0("age^", 2:params$agePoly, collapse = "+"))
-  }
-} else {
-  if( params$outcome_chr == "When a mother works for pay, do Europeans think the children suffer?" ){
-    fomula = paste("v72", "~", paste(params$control_chr, collapse = "+"))
-  }else{
-    fomula = paste("v80", "~", paste(params$control_chr, collapse = "+"))
-  }
-}
 
 
 
